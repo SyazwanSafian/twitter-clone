@@ -1,7 +1,18 @@
+import { useEffect, useState } from "react";
 import { Button, Col, Image, Row } from "react-bootstrap";
 
-export default function ProfilePostCard() {
+export default function ProfilePostCard({ content, postId }) {
+    const [likes, setLikes] = useState(0);
     const pic = "https://pbs.twimg.com/profile_images/1587405892437221376/h167Jlb2_400x400.jpg";
+
+    useEffect(() => {
+        fetch(
+            `https://f33980ee-7435-49c3-a39f-77c6479f01a5-00-3qp4evkzwzgtf.pike.replit.dev/likes/post/${postId}`
+        )
+            .then((response) => response.json())
+            .then((data) => setLikes(data.length))
+            .catch((error) => console.error("Error:", error));
+    }, [postId]);
 
     return (
         <Row
@@ -18,7 +29,7 @@ export default function ProfilePostCard() {
             <Col>
                 <strong>Abuya</strong>
                 <span> @Abuya.Skibidi  .  June 24</span>
-                <p>Abuya seorang yang teliti</p>
+                <p>{content}</p>
                 <div className="d-flex justify-content-between">
                     <Button variant="light">
                         <i className="bi bi-chat"></i>
@@ -26,7 +37,7 @@ export default function ProfilePostCard() {
                         <i className="bi bi-repeat"></i>
                     </Button>
                     <Button variant="light">
-                        <i className="bi bi-heart"></i>
+                        <i className="bi bi-heart" >{likes}</i>
                     </Button>
                     <Button variant="light">
                         <i className="bi bi-graph-up"></i>
