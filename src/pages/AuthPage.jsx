@@ -1,12 +1,17 @@
+import {
+    GoogleAuthProvider,
+    createUserWithEmailAndPassword,
+    getAuth,
+    signInWithEmailAndPassword,
+    signInWithPopup,
+} from "firebase/auth";
 import { Col, Image, Row, Button, Modal, Form } from "react-bootstrap";
-import axios from "axios";
-import useLocalStorage from "use-local-storage";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../components/AuthProvider";
 
 export default function AuthPage() {
     const loginImage = "https://sig1.co/img-twitter-1";
-    const url = "https://f33980ee-7435-49c3-a39f-77c6479f01a5-00-3qp4evkzwzgtf.pike.replit.dev"
 
     //possible values: null(no modal shows), "Login", "SignUp"
     const [modalShow, setModalShow] = useState(null);
@@ -14,21 +19,26 @@ export default function AuthPage() {
     const handleShowLogin = () => setModalShow("Login");
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [authToken, setAuthToken] = useLocalStorage("authToken", "");
 
     const navigate = useNavigate();
+    const auth = getAuth();
+    const { currentUser } = useContext(AuthContext);
 
     useEffect(() => {
-        if (authToken) {
+        if (currentUser) {
             navigate("/profile");
         }
-    }, [authToken, navigate]);
+    }, [currentUser, navigate]);
 
     const handleSignUp = async (event) => {
         event.preventDefault();
         try {
-            const res = await axios.post(`${url}/signup`, { username, password });
-            console.log(res.data);
+            const res = await createUserWithEmailAndPassword(
+                auth,
+                username,
+                password
+            );
+            console.log(res.user);
         } catch (error) {
             console.error(error);
         }
@@ -37,15 +47,21 @@ export default function AuthPage() {
     const handleLogin = async (event) => {
         event.preventDefault();
         try {
-            const res = await axios.post(`${url}/login`, { username, password });
-            if (res.data && res.data.auth === true && res.data.token) {
-                setAuthToken(res.data.token); //Save token to localStorage
-                console.log("Login was successful, token saved");
-            }
+            await signInWithEmailAndPassword(auth, username, password);
         } catch (error) {
             console.error(error);
         }
     };
+
+    const provider = new GoogleAuthProvider();
+    const handleGoogleLogin = async (event) => {
+        event.preventDefault();
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (error) {
+            console.error(error);
+        }
+    }
 
     const handleClose = () => setModalShow(null);
 
@@ -61,7 +77,7 @@ export default function AuthPage() {
                 <h2 className="my-5" style={{ fontSize: 31 }}>Join Twitter Today.</h2>
 
                 <Col sm={5} className="d-grid gap-2">
-                    <Button className="rounded-pill" variant="outline-dark">
+                    <Button className="rounded-pill" variant="outline-dark" onClick={handleGoogleLogin}>
                         <i className="bi bi-google"></i>Sign up with Google
                     </Button>
                     <Button className="rounded-pill" variant="outline-dark">
@@ -86,11 +102,11 @@ export default function AuthPage() {
                 >
                     <Modal.Body>
                         <h2 className="m-4" style={{ fontWeight: "bold" }}>
-                            {modalShow === "Signup" ? "Create your account" : "Log in to your account"}
+                            {modalShow === "SignUp" ? "Create your account" : "Log in to your account"}
                         </h2>
                         <Form
                             className="d-grip gap-2 px-5"
-                            onSubmit={modalShow === "Signup" ? handleSignUp : handleLogin}
+                            onSubmit={modalShow === "SignUp" ? handleSignUp : handleLogin}
                         >
                             <Form.Group className="mb-3" controlId="formBasicEmail">
                                 <Form.Control
@@ -108,7 +124,7 @@ export default function AuthPage() {
                                 By signing up, you agree to the Terms of Service and Privacy Policy, including Cookie Use. SigmaTweets may use your contact information, including your email address and phone number for purposes outlined in our Privacy Policy, like keeping your account secure and personalizing our services, including ads. Learn more. Other will be able to find you by email or phone number, when provided, unless you choose otherwise here.
                             </p>
                             <Button className="rounded-pill" type="submit">
-                                {modalShow === "Signup" ? "Sign up" : "Log in"}
+                                {modalShow === "SignUp" ? "Sign up" : "Log in"}
                             </Button>
                         </Form>
                     </Modal.Body>
